@@ -12,7 +12,7 @@
     --ink:#20261f; --cedar:#33503b; --cedar-soft:#4a6b52;
     --dusk:#3a4a63; --copper:#a9662f; --copper-bright:#c67c3d;
     --line:#b7ad95; --line-soft:#cfc7b2; --unavail:#9a8f78;
-    --avail:#cbd9c2; --avail-edge:#5c7a52;
+    --avail:#cbd9c2; --avail-edge:#5c7a52; --danger:#a3341f;
     --blackout:#e2c9b6;
   }
   *{box-sizing:border-box;}
@@ -53,6 +53,35 @@
   .nights-wrap input{width:52px;height:34px;text-align:center;border:1.5px solid var(--ink);border-left:none;border-right:none;font-family:'Spline Sans Mono',monospace;font-size:16px;background:var(--stone);color:var(--ink);}
   .winpick{font-family:'Newsreader',serif;font-size:14px;color:var(--dusk);font-style:italic;}
   .winpick b{font-style:normal;font-family:'Saira Condensed',sans-serif;text-transform:uppercase;letter-spacing:.04em;color:var(--ink);font-weight:600;}
+  .disc-wrap{display:flex;align-items:center;position:relative;}
+  .disc-pct{width:56px;height:34px;text-align:center;border:1.5px solid var(--ink);border-right:none;font-family:'Spline Sans Mono',monospace;font-size:16px;background:var(--stone);color:var(--ink);}
+  .disc-sign{height:34px;line-height:34px;padding:0 8px;border:1.5px solid var(--ink);border-right:none;font-family:'Spline Sans Mono',monospace;font-size:14px;background:var(--stone);color:var(--unavail);}
+  .disc-fambtn{height:34px;padding:0 12px;border:1.5px solid var(--ink);background:transparent;font-family:'Saira Condensed',sans-serif;font-weight:600;font-size:13px;letter-spacing:.03em;cursor:pointer;color:var(--ink);white-space:nowrap;}
+  .disc-fambtn.has{background:var(--ink);color:var(--stone);}
+  .disc-menu{position:absolute;top:38px;right:0;z-index:40;min-width:200px;background:var(--paper);border:1.5px solid var(--ink);box-shadow:3px 3px 0 rgba(32,38,31,.18);padding:6px;}
+  .disc-menu label{display:flex;align-items:center;gap:8px;padding:6px 7px;font-family:'Saira Condensed',sans-serif;font-size:14px;cursor:pointer;color:var(--ink);}
+  .disc-menu label:hover{background:var(--stone);}
+  .disc-menu input{width:15px;height:15px;accent-color:var(--cedar);cursor:pointer;}
+  .disc-menu .dot{width:11px;height:11px;border:1.5px solid var(--ink);flex-shrink:0;}
+  /* top summary: total / discount / new total */
+  .lg-summary{margin:2px 0 14px;padding:12px;border:1.5px solid var(--ink);background:rgba(255,255,255,.45);}
+  .lg-summary .sm-row{display:flex;justify-content:space-between;align-items:baseline;font-family:'Spline Sans Mono',monospace;font-size:13px;padding:3px 0;}
+  .lg-summary .sm-row em{font-style:normal;font-family:'Saira Condensed',sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:11px;color:var(--cedar-soft);}
+  .lg-summary .sm-total{border-top:1.5px solid var(--ink);margin-top:5px;padding-top:6px;font-weight:600;}
+  .lg-summary .sm-total em{color:var(--ink);font-size:12px;}
+  .lg-summary .sm-net .sm-v{color:var(--cedar);font-weight:600;}
+  .lg-summary .sm-disc-head em{color:var(--cedar);}
+  .lg-summary .sm-disc-item{padding:2px 0 2px 12px;font-size:12px;color:var(--unavail);}
+  .lg-summary .sm-disc-item .dot{display:inline-block;width:9px;height:9px;border:1.5px solid var(--ink);margin-right:6px;vertical-align:middle;}
+  /* per-lodging reconciliation readout */
+  .recon{margin:2px 0 14px;padding:10px 11px;border:1px dashed var(--line);background:rgba(255,255,255,.3);}
+  .recon-h{font-family:'Saira Condensed',sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;font-weight:600;color:var(--cedar-soft);margin-bottom:6px;}
+  .recon-row{display:flex;justify-content:space-between;align-items:baseline;font-family:'Spline Sans Mono',monospace;font-size:12px;padding:2px 0;}
+  .recon-row .rl{color:var(--ink);}
+  .recon-row .rv{color:var(--unavail);}
+  .recon-row.over{color:var(--danger,#a3341f);}
+  .recon-row.over .rl,.recon-row.over .rv{color:var(--danger,#a3341f);font-weight:600;}
+  .recon-flag{margin-top:6px;font-family:'Saira Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:.03em;color:var(--danger,#a3341f);}
 
   /* ======= ASSIGN LAYOUT ======= */
   .assign-grid{display:grid;grid-template-columns:262px 1fr;gap:28px;align-items:start;}
@@ -321,6 +350,15 @@
           <button id="nPlus">+</button>
         </div>
       </div>
+      <div class="ctrl">
+        <label>Discount</label>
+        <div class="disc-wrap">
+          <input id="discPct" class="disc-pct" type="number" min="0" max="100" step="1" value="0">
+          <span class="disc-sign">%</span>
+          <button id="discFamBtn" class="disc-fambtn" type="button">Families &#9662;</button>
+          <div id="discFamMenu" class="disc-menu" hidden></div>
+        </div>
+      </div>
       <div class="ctrl" style="flex:1;min-width:230px;">
         <label>Selected Window</label>
         <div class="winpick" id="winReadout">No dates chosen &mdash; set them on the <b>Availability</b> tab</div>
@@ -354,9 +392,11 @@
               </div>
             </div>
           </div>
+          <div id="ledgerSummary"></div>
+          <div id="ledgerRecon"></div>
           <div id="ledgerList"></div>
           <div class="lg-grand">
-            <div class="glabel">Total for the stay</div>
+            <div class="glabel">New Total to Be Paid</div>
             <div class="gval" id="grandTotal">$0</div>
             <div class="gbreak" id="grandBreak"></div>
           </div>
@@ -519,7 +559,9 @@ const st = {
   method:"even",                    // "even" or "prorata" for leftover distribution
   chosen:{barn:true,place:true,gate:true,roost:true},  // lodgings considered on the calendar
   tagOff:{},                        // tagId -> true when a toggleable tag is switched off (fully out of play)
-  costOff:{}                        // tagId -> true when a cost-toggle tag's room cost flows to the pool instead of its family
+  costOff:{},                       // tagId -> true when a cost-toggle tag's room cost flows to the pool instead of its family
+  discountPct:0,                    // group prepaid contribution as a % of full lodging total (comes off the top of both layers)
+  discountBills:[]                  // billIds sharing the prepaid discount evenly; display-only at top, never itemized in Cost by Family
 };
 
 /* ================= HELPERS ================= */
@@ -690,7 +732,8 @@ function computeCosts(){
     });
     if(occupied){
       anyOccupied=true;
-      const full=RATES[l.id][st.year]*st.nights;
+      const fullGross=RATES[l.id][st.year]*st.nights;
+      const full=fullGross;
       // families present via a cost-off room (sleeping there, cost pooled) should still
       // participate in that lodging's pool split — add them with a zero base if not already in.
       l.rooms.forEach(r=>{
@@ -700,9 +743,34 @@ function computeCosts(){
         const allCostOff = occs.every(tid=>{const t=tagById(tid);return t.costToggle && st.costOff[tid];});
         if(allCostOff){ [...new Set(occs.map(t=>tagById(t).bill))].forEach(bid=>{ if(!(bid in fams))fams[bid]=0; }); }
       });
-      lodgingInfo[l.id]={full, claimed, leftover:Math.max(0,full-claimed), fams};
+      lodgingInfo[l.id]={fullGross, full, claimed, leftover:full-claimed, fams};
     }
   });
+
+  // ---- Group prepaid Discount: comes off the top of BOTH layers ----
+  // discount $ = discountPct% of the summed full (gross) cost of occupied lodgings,
+  // split EVENLY among the selected bill-families for top-of-page display only.
+  // Mechanism: reduce each occupied lodging's effective `full` by its pro-rata share of
+  // the discount, so both Layer 1 (via the reduced leftover basis) and Layer 2 operate on
+  // the reduced total. Leftover is NOT floored — a negative leftover means room charges alone
+  // exceed the discounted lodging cost (overpayment), which the reconciliation readout surfaces.
+  let grossOccupied=0; for(const lid in lodgingInfo)grossOccupied+=lodgingInfo[lid].fullGross;
+  const discPct=Math.max(0,Math.min(100,st.discountPct||0));
+  const activeDiscBills=(st.discountBills||[]).filter(bid=>BILLS.some(b=>b.id===bid));
+  const discountTotal=(discPct>0 && grossOccupied>0)? grossOccupied*(discPct/100) : 0;
+  if(discountTotal>0 && grossOccupied>0){
+    for(const lid in lodgingInfo){
+      const info=lodgingInfo[lid];
+      const share=discountTotal*(info.fullGross/grossOccupied); // pro-rata by lodging size
+      info.discount=share;
+      info.full=info.fullGross-share;
+      info.leftover=info.full-info.claimed;   // may be negative → surfaced, not swallowed
+    }
+  } else {
+    for(const lid in lodgingInfo){lodgingInfo[lid].discount=0;}
+  }
+  // per-family even split of the total discount (display only)
+  const discPerFam=activeDiscBills.length?discountTotal/activeDiscBills.length:0;
 
   // per-family accumulators
   const fam={}; BILLS.forEach(b=>fam[b.id]={room:0, leftover:0, tower:0, lodgings:new Set()});
@@ -732,8 +800,9 @@ function computeCosts(){
         TOWER_BILLS.forEach(bid=>{ fam[bid].tower+=share; });
       }
     }
-    // the tower cost is NOT part of the general leftover: reduce Place's leftover by it
-    placeInfo.leftover=Math.max(0, placeInfo.full - placeInfo.claimed - towerCost);
+    // the tower cost is NOT part of the general leftover: reduce Place's leftover by it.
+    // placeInfo.full already has the discount removed; leftover may go negative (surfaced).
+    placeInfo.leftover=placeInfo.full - placeInfo.claimed - towerCost;
     // ensure tower families count as "in" Nicklos Place for pool purposes even if they hold no other NP room
     TOWER_BILLS.forEach(bid=>fam[bid].lodgings.add("place"));
   }
@@ -743,7 +812,7 @@ function computeCosts(){
     for(const lid in lodgingInfo){
       const info=lodgingInfo[lid];
       const bids=Object.keys(info.fams);
-      if(!bids.length||info.leftover<=0)continue;
+      if(!bids.length||info.leftover===0)continue;   // negative leftover (discount/overage) is still distributed
       if(st.method==="even"){
         const share=info.leftover/bids.length;
         bids.forEach(bid=>fam[bid].leftover+=share);
@@ -755,7 +824,7 @@ function computeCosts(){
   } else {
     let pot=0; for(const lid in lodgingInfo)pot+=lodgingInfo[lid].leftover;
     const placedBids=BILLS.map(b=>b.id).filter(bid=>fam[bid].lodgings.size>0);
-    if(pot>0&&placedBids.length){
+    if(pot!==0&&placedBids.length){
       if(st.method==="even"){
         const share=pot/placedBids.length;
         placedBids.forEach(bid=>fam[bid].leftover+=share);
@@ -766,9 +835,13 @@ function computeCosts(){
     }
   }
 
-  // grand total = sum of full costs of occupied lodgings
-  let grand=0; for(const lid in lodgingInfo)grand+=lodgingInfo[lid].full;
-  return {fam, lodgingInfo, grand, anyOccupied, towerCost};
+  // Totals. grandGross = sum of full (pre-discount) lodging cost.
+  // grand (= net, "New Total Lodging to Be Paid") = grandGross - discountTotal,
+  // and equals the sum of the Cost by Family section.
+  const grandGross=grossOccupied;
+  const grand=grandGross-discountTotal;   // net total to be paid
+  return {fam, lodgingInfo, grandGross, grand, discountTotal, discPerFam,
+          discBills:activeDiscBills, discPct, anyOccupied, towerCost};
 }
 
 /* ================= RENDER: LEDGER ================= */
@@ -806,6 +879,49 @@ function renderLedger(){
     }
     card.innerHTML=inner; el.appendChild(card);
   });
+  // ---- Top summary: Total Lodging Cost / Discount (itemized) / New Total to Be Paid ----
+  const sumEl=$("#ledgerSummary");
+  if(C.anyOccupied){
+    let sHtml=`<div class="lg-summary">`
+      +`<div class="sm-row"><em>Total Lodging Cost</em><span class="sm-v">$${Math.round(C.grandGross).toLocaleString()}</span></div>`;
+    if(C.discountTotal>0){
+      sHtml+=`<div class="sm-row sm-disc-head"><em>Discount (${C.discPct}%)</em><span class="sm-v">&minus;$${Math.round(C.discountTotal).toLocaleString()}</span></div>`;
+      if(C.discBills.length){
+        C.discBills.forEach(bid=>{const b=billById(bid);
+          sHtml+=`<div class="sm-row sm-disc-item"><em><span class="dot" style="background:${b.color}"></span>${esc(b.name)}</em><span>$${Math.round(C.discPerFam).toLocaleString()}</span></div>`;});
+      } else {
+        sHtml+=`<div class="sm-row sm-disc-item"><em>No families selected</em><span></span></div>`;
+      }
+    }
+    sHtml+=`<div class="sm-row sm-total sm-net"><em>New Total Lodging to Be Paid</em><span class="sm-v">$${Math.round(C.grand).toLocaleString()}</span></div>`
+      +`</div>`;
+    sumEl.innerHTML=sHtml;
+  } else { sumEl.innerHTML=""; }
+
+  // ---- Per-lodging reconciliation: discounted lodging cost vs. sum of assigned room charges ----
+  const reconEl=$("#ledgerRecon");
+  const occLids=Object.keys(C.lodgingInfo);
+  if(occLids.length){
+    let anyOver=false;
+    let rHtml=`<div class="recon"><div class="recon-h">Lodging Reconciliation</div>`;
+    occLids.forEach(lid=>{
+      const info=C.lodgingInfo[lid];
+      const name=LODGINGS.find(l=>l.id===lid).name;
+      // assigned = claimed room charges + tower cost (Place only); compare to discounted lodging cost
+      const assigned=info.claimed+(lid==="place"?C.towerCost:0);
+      const over=assigned - info.full;                 // >0 means overpayment for this lodging
+      const isOver=over>0.5;
+      if(isOver)anyOver=true;
+      rHtml+=`<div class="recon-row ${isOver?"over":""}"><span class="rl">${esc(name)}</span>`
+        +`<span class="rv">$${Math.round(assigned).toLocaleString()} / $${Math.round(info.full).toLocaleString()}${isOver?"  (+$"+Math.round(over).toLocaleString()+")":""}</span></div>`;
+    });
+    if(anyOver){
+      rHtml+=`<div class="recon-flag">&#9888; Overpayment: assigned room charges exceed the lodging cost. Lower a room price in the flagged lodging.</div>`;
+    }
+    rHtml+=`</div>`;
+    reconEl.innerHTML=rHtml;
+  } else { reconEl.innerHTML=""; }
+
   $("#grandTotal").textContent="$"+Math.round(C.grand).toLocaleString();
   // occupied lodging summary
   const occNames=Object.keys(C.lodgingInfo).map(lid=>LODGINGS.find(l=>l.id===lid).name);
@@ -946,6 +1062,32 @@ $$("#yearSeg button").forEach(b=>{
   b.onclick=()=>{st.year=parseInt(b.dataset.year);$$("#yearSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b));renderChooser();renderAll();};
 });
 function setNights(n){st.nights=Math.max(1,Math.min(21,n));$("#nights").value=st.nights;renderAll();}
+
+/* ---- Discount control (prepaid group contribution) ---- */
+function updateDiscBtn(){
+  const btn=$("#discFamBtn"); const n=(st.discountBills||[]).length;
+  btn.textContent=(n? n+" selected " : "Families ")+"\u25BE";
+  btn.classList.toggle("has", n>0);
+}
+function renderDiscMenu(){
+  const menu=$("#discFamMenu"); menu.innerHTML="";
+  BILLS.forEach(b=>{
+    const lab=document.createElement("label");
+    const on=(st.discountBills||[]).includes(b.id);
+    lab.innerHTML=`<input type="checkbox" ${on?"checked":""}><span class="dot" style="background:${b.color}"></span>${esc(b.name)}`;
+    lab.querySelector("input").onchange=e=>{
+      if(e.target.checked){ if(!st.discountBills.includes(b.id))st.discountBills.push(b.id); }
+      else { st.discountBills=st.discountBills.filter(x=>x!==b.id); }
+      updateDiscBtn(); renderAll();
+    };
+    menu.appendChild(lab);
+  });
+}
+$("#discPct").onchange=e=>{let v=parseFloat(e.target.value);if(isNaN(v)||v<0)v=0;if(v>100)v=100;st.discountPct=v;e.target.value=v;renderAll();};
+$("#discPct").oninput=e=>{let v=parseFloat(e.target.value);if(isNaN(v))return;if(v<0)v=0;if(v>100)v=100;st.discountPct=v;renderAll();};
+$("#discFamBtn").onclick=e=>{e.stopPropagation();const m=$("#discFamMenu");if(m.hidden){renderDiscMenu();m.hidden=false;}else{m.hidden=true;}};
+document.addEventListener("click",e=>{const m=$("#discFamMenu");if(!m.hidden&&!e.target.closest(".disc-wrap"))m.hidden=true;});
+updateDiscBtn();
 $("#nMinus").onclick=()=>setNights(st.nights-1);
 $("#nPlus").onclick=()=>setNights(st.nights+1);
 $("#nights").onchange=e=>setNights(parseInt(e.target.value)||1);
@@ -1113,15 +1255,19 @@ function snapshot(name){
     year:st.year, nights:st.nights, pool:st.pool, method:st.method,
     chosen:{...st.chosen}, priceOverride:{...st.priceOverride},
     placements:JSON.parse(JSON.stringify(st.placements)),
-    window: st.window?{...st.window}:null
+    window: st.window?{...st.window}:null,
+    discountPct:st.discountPct||0, discountBills:[...(st.discountBills||[])]
   };
 }
 function applyScenario(s){
   st.year=s.year; st.nights=s.nights; st.pool=s.pool; st.method=s.method;
   st.chosen={...s.chosen}; st.priceOverride={...s.priceOverride};
   st.placements=JSON.parse(JSON.stringify(s.placements)); st.window=s.window?{...s.window}:null;
+  st.discountPct=s.discountPct||0; st.discountBills=[...(s.discountBills||[])];
   // reflect controls
   $("#nights").value=st.nights;
+  $("#discPct").value=st.discountPct;
+  updateDiscBtn();
   $$("#yearSeg button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.year==st.year));
   $$("#poolSeg button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.pool===st.pool));
   $$("#methodSeg button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.method===st.method));
@@ -1133,8 +1279,8 @@ function scenarioSummary(s){
   // compute grand + occupied lodging names from a snapshot without disturbing live state
   const saved=snapshot(""); // current
   // temporarily apply s to compute, then restore
-  const keep={year:st.year,nights:st.nights,pool:st.pool,method:st.method,chosen:{...st.chosen},priceOverride:{...st.priceOverride},placements:JSON.parse(JSON.stringify(st.placements))};
-  st.year=s.year;st.nights=s.nights;st.pool=s.pool;st.method=s.method;st.chosen={...s.chosen};st.priceOverride={...s.priceOverride};st.placements=JSON.parse(JSON.stringify(s.placements));
+  const keep={year:st.year,nights:st.nights,pool:st.pool,method:st.method,chosen:{...st.chosen},priceOverride:{...st.priceOverride},placements:JSON.parse(JSON.stringify(st.placements)),discountPct:st.discountPct,discountBills:[...(st.discountBills||[])]};
+  st.year=s.year;st.nights=s.nights;st.pool=s.pool;st.method=s.method;st.chosen={...s.chosen};st.priceOverride={...s.priceOverride};st.placements=JSON.parse(JSON.stringify(s.placements));st.discountPct=s.discountPct||0;st.discountBills=[...(s.discountBills||[])];
   const C=computeCosts();
   const occNames=Object.keys(C.lodgingInfo).map(lid=>LODGINGS.find(l=>l.id===lid).name);
   const grand=Math.round(C.grand);
@@ -1194,8 +1340,8 @@ $("#saveScenario").onclick=()=>{
 /* ================= PDF EXPORT (print) ================= */
 function exportPDF(s){
   // apply snapshot to state to compute, keep a restore copy
-  const keep={year:st.year,nights:st.nights,pool:st.pool,method:st.method,chosen:{...st.chosen},priceOverride:{...st.priceOverride},placements:JSON.parse(JSON.stringify(st.placements)),window:st.window?{...st.window}:null};
-  st.year=s.year;st.nights=s.nights;st.pool=s.pool;st.method=s.method;st.chosen={...s.chosen};st.priceOverride={...s.priceOverride};st.placements=JSON.parse(JSON.stringify(s.placements));st.window=s.window?{...s.window}:null;
+  const keep={year:st.year,nights:st.nights,pool:st.pool,method:st.method,chosen:{...st.chosen},priceOverride:{...st.priceOverride},placements:JSON.parse(JSON.stringify(st.placements)),window:st.window?{...st.window}:null,discountPct:st.discountPct,discountBills:[...(st.discountBills||[])]};
+  st.year=s.year;st.nights=s.nights;st.pool=s.pool;st.method=s.method;st.chosen={...s.chosen};st.priceOverride={...s.priceOverride};st.placements=JSON.parse(JSON.stringify(s.placements));st.window=s.window?{...s.window}:null;st.discountPct=s.discountPct||0;st.discountBills=[...(s.discountBills||[])];
 
   const C=computeCosts();
   const occ=Object.keys(C.lodgingInfo);
@@ -1214,7 +1360,14 @@ function exportPDF(s){
       <td class="num">$${Math.round(f.leftover).toLocaleString()}</td>
       <td class="num">$${Math.round(tot).toLocaleString()}</td></tr>`;
   });
-  famRows+=`<tr class="pr-tot"><td>Total for the stay</td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num">$${Math.round(C.grand).toLocaleString()}</td></tr>`;
+  famRows+=`<tr class="pr-tot"><td>New Total to Be Paid</td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num">$${Math.round(C.grand).toLocaleString()}</td></tr>`;
+
+  // discount summary line for the print header (Total Lodging Cost / Discount / New Total)
+  let discLine="";
+  if(C.discountTotal>0){
+    const items=C.discBills.map(bid=>`${esc(billById(bid).name)} $${Math.round(C.discPerFam).toLocaleString()}`).join(" · ");
+    discLine=`<div class="pr-meta" style="margin-bottom:8px;">Total Lodging Cost $${Math.round(C.grandGross).toLocaleString()} &nbsp;·&nbsp; Discount (${C.discPct}%) &minus;$${Math.round(C.discountTotal).toLocaleString()}${items?" ("+items+")":""} &nbsp;·&nbsp; New Total to Be Paid $${Math.round(C.grand).toLocaleString()}</div>`;
+  }
 
   // annotated plans for occupied lodgings only
   let plansHtml="";
@@ -1249,6 +1402,7 @@ function exportPDF(s){
       </div>
       <div class="pr-sec-title">Lodgings &amp; Cost Split</div>
       <div class="pr-meta" style="margin-bottom:8px;">Renting: ${occNames.length?esc(occNames.join(", ")):"nothing"} · ${methodLabel}, ${poolLabel}</div>
+      ${discLine}
       <table class="pr-table">
         <thead><tr><th>Family</th><th style="text-align:right">Rooms</th><th style="text-align:right">Tower split</th><th style="text-align:right">Shared leftover</th><th style="text-align:right">Total</th></tr></thead>
         <tbody>${famRows}</tbody>
